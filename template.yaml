@@ -1,0 +1,100 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: 'AWS::Serverless-2016-10-31'
+Resources:
+  SampleFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: "lambda_1"
+      Handler: App::handleRequest  # Replace with your fully qualified handler path
+      Runtime: java11  # Use Java 11 runtime for Kotlin
+      CodeUri: build/libs/test3-main-1.0-SNAPSHOT.jar # Replace with your actual artifact path (generated .jar file)
+
+      Policies:
+        - S3CrudPolicy:
+            BucketName: "bucket_1"  # Replace with your actual S3 bucket name
+        - Statement:
+            Effect: Allow
+            Action:
+              - sqs:SendMessage
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+              - sqs:GetQueueUrl
+              - sqs:GetQueueAttributes
+              - sqs:ChangeMessageVisibility
+              - sqs:PurgeQueue
+            Resource: !GetAtt SQSQueue.Arn
+
+      Events:
+        HelloWorldApi:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: post
+
+#lambda 2 params
+  SampleFunction2:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: "lambda_2"
+      Handler: SQSConsumer::handleRequest  # Replace with your fully qualified handler path
+      Runtime: java11  # Use Java 11 runtime for Kotlin
+      CodeUri: build/libs/test3-sqsconsumer-1.0-SNAPSHOT.jar # Replace with your actual artifact path (generated .jar file)
+
+      Policies:
+        - S3CrudPolicy:
+            BucketName: "bucket1vi"  # Replace with your actual S3 bucket name
+        - Statement:
+            Effect: Allow
+            Action:
+              - sqs:SendMessage
+              - sqs:ReceiveMessage
+              - sqs:DeleteMessage
+              - sqs:GetQueueUrl
+              - sqs:GetQueueAttributes
+              - sqs:ChangeMessageVisibility
+              - sqs:PurgeQueue
+            Resource: !GetAtt SQSQueue.Arn
+
+      Events:
+        SQSEvent:
+
+          Type: SQS
+
+          Properties:
+            Queue: !GetAtt SQSQueue.Arn
+            BatchSize: 10
+
+
+  ReceiverLambdaFunction:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      FunctionName: "lambda_3"
+      Handler: ReceiverLambda::handleRequest
+      Runtime: java11
+      CodeUri: build/libs/test3-receiverlambda-1.0-SNAPSHOT.jar
+      MemorySize: 500
+      Timeout: 30
+      Policies:
+        - DynamoDBCrudPolicy :
+            TableName: "table1vi"
+        - S3CrudPolicy :
+            BucketName: "bucket1vi"
+
+
+  SQSQueue:
+    Type: 'AWS::SQS::Queue'
+    Properties:
+      QueueName: "queue_1"
+  MyS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: "bucket_1"
+
+Outputs:
+  SampleFunctionArn:
+    Description: 'ARN of the Lambda Function'
+    Value: !GetAtt SampleFunction.Arn
+
+  SampleFunctionName:
+    Description: 'Name of the Lambda Function'
+    Value: !Ref SampleFunction

@@ -1,0 +1,16 @@
+# More information about the configuration file can be found here:
+# https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-config.html
+version = 0.1
+
+
+[default]
+[default.deploy]
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+stack_name="finalstackvi"
+s3_bucket="aws-sam-cli-managed-default-samclisourcebucket-bucket_id"
+s3_prefix = "stack_name"
+region = "us-east-1"
+disable_rollback = true
+image_repositories = []

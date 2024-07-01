@@ -1,0 +1,88 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.7.21'
+    id 'application'
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+// https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-s3
+    implementation("com.amazonaws:aws-java-sdk-s3:1.12.744")
+
+    implementation("org.slf4j:slf4j-api:1.7.32")
+    implementation("ch.qos.logback:logback-classic:1.2.6")
+    //new
+    implementation("com.amazonaws:aws-lambda-java-core:1.2.1")
+    implementation("com.amazonaws:aws-lambda-java-events:3.11.6")
+    implementation("com.amazonaws:aws-java-sdk-s3:1.12.187") // AWS SDK for S3
+    implementation("software.amazon.awssdk:s3")
+    implementation("software.amazon.awssdk:s3:2.17.79")
+    implementation("software.amazon.awssdk:core:2.17.79")
+    implementation("com.amazonaws:aws-java-sdk-sqs:1.12.745")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.1")
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    // https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-dynamodb
+    implementation("com.amazonaws:aws-java-sdk-dynamodb:1.12.747")
+// https://mvnrepository.com/artifact/com.google.code.gson/gson
+    implementation("com.google.code.gson:gson:2.11.0")
+
+
+}
+
+test {
+    useJUnitPlatform()
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = '1.8'
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = '1.8'
+}
+
+application {
+    mainClassName = 'MainKt'
+}
+task fatJar(type: Jar) {
+
+    manifest {
+        attributes 'Main-Class': "${mainClassName}"
+    }
+
+    archiveBaseName = "${rootProject.name}-main"
+    tasks.withType(Jar){
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
+    from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    //from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } setDuplicatesStrategy(DuplicatesStrategy.INCLUDE) }
+    with jar
+}
+
+task sqsConsumerJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': "SQSConsumer" // Adjust with your actual package name
+    }
+    archiveBaseName = "${rootProject.name}-sqsconsumer"
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    from sourceSets.main.output
+    from configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    with jar
+}
+
+task receiverLambdaJar(type: Jar) {
+    manifest {
+        attributes 'Main-Class': "ReceiverLambda" // Adjust with your actual package name
+    }
+    archiveBaseName = "${rootProject.name}-receiverlambda"
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    from sourceSets.main.output
+    from configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    with jar
+}
